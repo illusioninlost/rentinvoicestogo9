@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { apiFetch } from '../apiFetch';
+import ConfirmModal from '../components/ConfirmModal';
 
 function fmt(n) {
   return '$' + Number(n || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -14,13 +15,13 @@ export default function InvoiceDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const [inv, setInv] = useState(null);
+  const [showConfirm, setShowConfirm] = useState(false);
 
   useEffect(() => {
     apiFetch(`/api/invoices/${id}`).then(r => r.json()).then(setInv);
   }, [id]);
 
   async function handleDelete() {
-    if (!confirm('Delete this invoice?')) return;
     await apiFetch(`/api/invoices/${id}`, { method: 'DELETE' });
     navigate('/');
   }
@@ -28,11 +29,12 @@ export default function InvoiceDetail() {
   if (!inv) return <main className="page"><p className="text-muted">Loading…</p></main>;
 
   return (
+    <>
     <main className="page">
       <div className="invoice-actions">
         <Link to="/" className="btn btn-secondary btn-sm">← Back</Link>
         <Link to={`/invoices/${id}/edit`} className="btn btn-secondary btn-sm">Edit</Link>
-        <button className="btn btn-danger btn-sm" onClick={handleDelete}>Delete</button>
+        <button className="btn btn-danger btn-sm" onClick={() => setShowConfirm(true)}>Delete</button>
         <button className="btn btn-primary btn-sm" onClick={() => window.print()}>Print / PDF</button>
       </div>
 
@@ -109,5 +111,14 @@ export default function InvoiceDetail() {
         )}
       </div>
     </main>
+
+    {showConfirm && (
+      <ConfirmModal
+        message="Delete this invoice? This cannot be undone."
+        onConfirm={handleDelete}
+        onCancel={() => setShowConfirm(false)}
+      />
+    )}
+    </>
   );
 }

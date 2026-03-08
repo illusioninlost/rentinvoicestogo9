@@ -21,16 +21,23 @@ router.post('/', (req, res) => {
     VALUES
       (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `);
-  const result = stmt.run(
-    req.userId,
-    inv.invoice_number, inv.client_name, inv.client_email || '', inv.client_address || '',
-    inv.date_created, inv.due_date, inv.status || 'unpaid',
-    JSON.stringify(inv.items || []),
-    inv.tax_rate || 0, inv.subtotal || 0, inv.tax_amount || 0, inv.total || 0,
-    inv.notes || ''
-  );
-  const created = db.prepare('SELECT * FROM invoices WHERE id = ?').get(result.lastInsertRowid);
-  res.status(201).json(parseItems(created));
+  try {
+    const result = stmt.run(
+      req.userId,
+      inv.invoice_number, inv.client_name, inv.client_email || '', inv.client_address || '',
+      inv.date_created, inv.due_date, inv.status || 'unpaid',
+      JSON.stringify(inv.items || []),
+      inv.tax_rate || 0, inv.subtotal || 0, inv.tax_amount || 0, inv.total || 0,
+      inv.notes || ''
+    );
+    const created = db.prepare('SELECT * FROM invoices WHERE id = ?').get(result.lastInsertRowid);
+    res.status(201).json(parseItems(created));
+  } catch (err) {
+    if (err.message && err.message.includes('UNIQUE constraint failed')) {
+      return res.status(409).json({ error: `Invoice number "${inv.invoice_number}" already exists.` });
+    }
+    throw err;
+  }
 });
 
 // GET /api/invoices/:id
@@ -50,16 +57,23 @@ router.put('/:id', (req, res) => {
       tax_rate = ?, subtotal = ?, tax_amount = ?, total = ?, notes = ?
     WHERE id = ? AND user_id = ?
   `);
-  const result = stmt.run(
-    inv.invoice_number, inv.client_name, inv.client_email || '', inv.client_address || '',
-    inv.date_created, inv.due_date, inv.status || 'unpaid',
-    JSON.stringify(inv.items || []),
-    inv.tax_rate || 0, inv.subtotal || 0, inv.tax_amount || 0, inv.total || 0,
-    inv.notes || '', req.params.id, req.userId
-  );
-  if (result.changes === 0) return res.status(404).json({ error: 'Invoice not found' });
-  const updated = db.prepare('SELECT * FROM invoices WHERE id = ?').get(req.params.id);
-  res.json(parseItems(updated));
+  try {
+    const result = stmt.run(
+      inv.invoice_number, inv.client_name, inv.client_email || '', inv.client_address || '',
+      inv.date_created, inv.due_date, inv.status || 'unpaid',
+      JSON.stringify(inv.items || []),
+      inv.tax_rate || 0, inv.subtotal || 0, inv.tax_amount || 0, inv.total || 0,
+      inv.notes || '', req.params.id, req.userId
+    );
+    if (result.changes === 0) return res.status(404).json({ error: 'Invoice not found' });
+    const updated = db.prepare('SELECT * FROM invoices WHERE id = ?').get(req.params.id);
+    res.json(parseItems(updated));
+  } catch (err) {
+    if (err.message && err.message.includes('UNIQUE constraint failed')) {
+      return res.status(409).json({ error: `Invoice number "${inv.invoice_number}" already exists.` });
+    }
+    throw err;
+  }
 });
 
 // DELETE /api/invoices/:id

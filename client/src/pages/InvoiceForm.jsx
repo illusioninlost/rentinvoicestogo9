@@ -38,13 +38,17 @@ export default function InvoiceForm() {
   });
   const [items, setItems] = useState([newItem()]);
   const [saving, setSaving] = useState(false);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     if (!isEdit) {
       // Auto-generate invoice number
       apiFetch('/api/invoices').then(r => r.json()).then(list => {
-        const next = list.length + 1;
-        setForm(f => ({ ...f, invoice_number: `INV-${String(next).padStart(3, '0')}` }));
+        const max = list.reduce((m, inv) => {
+          const n = parseInt(inv.invoice_number.replace(/\D/g, ''), 10);
+          return isNaN(n) ? m : Math.max(m, n);
+        }, 0);
+        setForm(f => ({ ...f, invoice_number: `INV-${String(max + 1).padStart(3, '0')}` }));
       });
       return;
     }
@@ -94,12 +98,18 @@ export default function InvoiceForm() {
   async function handleSubmit(e) {
     e.preventDefault();
     setSaving(true);
+    setError(null);
     const payload = { ...form, items, subtotal, tax_amount, total,
       tax_rate: parseFloat(form.tax_rate) || 0 };
     const url = isEdit ? `/api/invoices/${id}` : '/api/invoices';
     const method = isEdit ? 'PUT' : 'POST';
     const res = await apiFetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
     const saved = await res.json();
+    if (!res.ok) {
+      setError(saved.error || 'Failed to save invoice.');
+      setSaving(false);
+      return;
+    }
     navigate(`/invoices/${saved.id}`);
   }
 
@@ -215,6 +225,7 @@ export default function InvoiceForm() {
           </div>
         </div>
 
+        {error && <div className="form-error" style={{ marginTop: 12, color: 'var(--danger)', fontWeight: 500 }}>{error}</div>}
         <div style={{ display: 'flex', gap: 10, marginTop: 16 }}>
           <button type="submit" className="btn btn-primary" disabled={saving}>{saving ? 'Saving…' : 'Save Invoice'}</button>
           <button type="button" className="btn btn-secondary" onClick={() => navigate(-1)}>Cancel</button>

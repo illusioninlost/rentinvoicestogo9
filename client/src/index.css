@@ -234,6 +234,36 @@ tbody tr:hover { background: #fafbfc; }
 .totals-row { display: flex; justify-content: space-between; font-size: 13px; }
 .totals-row.grand { font-weight: 700; font-size: 15px; border-top: 1px solid var(--border); padding-top: 8px; margin-top: 4px; }
 
+/* Confirm modal */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+  padding: 28px 32px;
+  width: 100%;
+  max-width: 360px;
+}
+
+.modal-message {
+  font-size: 15px;
+  font-weight: 500;
+  margin-bottom: 20px;
+  color: var(--text);
+}
+
+.modal-actions { display: flex; justify-content: flex-end; gap: 8px; }
+
 /* Auth pages */
 .auth-page {
   min-height: 100vh;

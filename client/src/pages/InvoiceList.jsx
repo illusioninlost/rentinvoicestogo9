@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { apiFetch } from '../apiFetch';
+import ConfirmModal from '../components/ConfirmModal';
 
 function fmt(amount) {
   return '$' + Number(amount || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -12,16 +13,30 @@ function StatusBadge({ status }) {
 
 export default function InvoiceList() {
   const [invoices, setInvoices] = useState([]);
+  const [confirmId, setConfirmId] = useState(null);
+  const [markPaidId, setMarkPaidId] = useState(null);
   const navigate = useNavigate();
 
   useEffect(() => {
     apiFetch('/api/invoices').then(r => r.json()).then(setInvoices);
   }, []);
 
-  async function handleDelete(id) {
-    if (!confirm('Delete this invoice?')) return;
-    await apiFetch(`/api/invoices/${id}`, { method: 'DELETE' });
-    setInvoices(prev => prev.filter(inv => inv.id !== id));
+  async function handleDelete() {
+    await apiFetch(`/api/invoices/${confirmId}`, { method: 'DELETE' });
+    setInvoices(prev => prev.filter(inv => inv.id !== confirmId));
+    setConfirmId(null);
+  }
+
+  async function handleMarkPaid() {
+    const inv = invoices.find(i => i.id === markPaidId);
+    const res = await apiFetch(`/api/invoices/${markPaidId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ...inv, status: 'paid' }),
+    });
+    const updated = await res.json();
+    setInvoices(prev => prev.map(i => i.id === markPaidId ? updated : i));
+    setMarkPaidId(null);
   }
 
   const totalInvoiced = invoices.reduce((s, i) => s + (i.total || 0), 0);
@@ -30,6 +45,7 @@ export default function InvoiceList() {
   const overdue = invoices.filter(i => i.status === 'overdue');
 
   return (
+    <>
     <main className="page">
       <div className="page-header">
         <h1>Invoices</h1>
@@ -92,7 +108,10 @@ export default function InvoiceList() {
                       <div className="actions-cell">
                         <button className="btn btn-ghost btn-sm" onClick={() => navigate(`/invoices/${inv.id}`)}>View</button>
                         <button className="btn btn-ghost btn-sm" onClick={() => navigate(`/invoices/${inv.id}/edit`)}>Edit</button>
-                        <button className="btn btn-ghost btn-sm" style={{ color: 'var(--danger)' }} onClick={() => handleDelete(inv.id)}>Delete</button>
+                        {inv.status !== 'paid' && (
+                          <button className="btn btn-ghost btn-sm" style={{ color: 'var(--success)' }} onClick={() => setMarkPaidId(inv.id)}>Mark Paid</button>
+                        )}
+                        <button className="btn btn-ghost btn-sm" style={{ color: 'var(--danger)' }} onClick={() => setConfirmId(inv.id)}>Delete</button>
                       </div>
                     </td>
                   </tr>
@@ -103,5 +122,23 @@ export default function InvoiceList() {
         </div>
       </div>
     </main>
+
+    {confirmId && (
+      <ConfirmModal
+        message="Delete this invoice? This cannot be undone."
+        onConfirm={handleDelete}
+        onCancel={() => setConfirmId(null)}
+      />
+    )}
+    {markPaidId && (
+      <ConfirmModal
+        message="Mark this invoice as paid?"
+        confirmLabel="Mark Paid"
+        confirmClassName="btn btn-primary"
+        onConfirm={handleMarkPaid}
+        onCancel={() => setMarkPaidId(null)}
+      />
+    )}
+    </>
   );
 }

@@ -54,4 +54,9 @@ try {
   db.exec('ALTER TABLE invoices ADD COLUMN user_id INTEGER');
 } catch {}
 
+// Add unique index on (user_id, invoice_number) if not already present
+try {
+  db.exec('CREATE UNIQUE INDEX idx_invoices_user_invoice_number ON invoices(user_id, invoice_number)');
+} catch {}
+
 module.exports = db;
