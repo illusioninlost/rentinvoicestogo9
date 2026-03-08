@@ -38,6 +38,31 @@ export default function Reports() {
     setResults(null);
   }
 
+  function exportCSV() {
+    const headers = ['Invoice #', 'Client', 'Email', 'Date Created', 'Due Date', 'Status', 'Subtotal', 'Tax Rate', 'Tax Amount', 'Total', 'Notes'];
+    const rows = results.map(inv => [
+      inv.invoice_number,
+      inv.client_name,
+      inv.client_email || '',
+      inv.date_created,
+      inv.due_date,
+      inv.status,
+      inv.subtotal,
+      inv.tax_rate,
+      inv.tax_amount,
+      inv.total,
+      inv.notes || '',
+    ].map(v => `"${String(v).replace(/"/g, '""')}"`).join(','));
+    const csv = [headers.join(','), ...rows].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `invoices-report-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
   const filteredTotal = results ? results.reduce((s, i) => s + (i.total || 0), 0) : 0;
 
   return (
@@ -75,6 +100,12 @@ export default function Reports() {
           </div>
         </div>
       </form>
+
+      {results !== null && results.length > 0 && (
+        <div style={{ display: 'flex', justifyContent: 'flex-start', marginTop: 12, marginBottom: 16 }}>
+          <button className="btn btn-secondary" onClick={exportCSV}>Export to CSV</button>
+        </div>
+      )}
 
       {results === null ? (
         <div className="empty-state">

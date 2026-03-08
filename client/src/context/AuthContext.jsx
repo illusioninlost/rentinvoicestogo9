@@ -4,13 +4,13 @@ const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(() => {
-    try { return JSON.parse(localStorage.getItem('user')); } catch { return null; }
+    try { return JSON.parse(sessionStorage.getItem('user')); } catch { return null; }
   });
-  const [token, setToken] = useState(() => localStorage.getItem('token') || null);
+  const [token, setToken] = useState(() => sessionStorage.getItem('token') || null);
 
   const saveSession = useCallback((newToken, newUser) => {
-    localStorage.setItem('token', newToken);
-    localStorage.setItem('user', JSON.stringify(newUser));
+    sessionStorage.setItem('token', newToken);
+    sessionStorage.setItem('user', JSON.stringify(newUser));
     setToken(newToken);
     setUser(newUser);
   }, []);
@@ -19,11 +19,11 @@ export function AuthProvider({ children }) {
     try {
       await fetch('/api/auth/logout', {
         method: 'POST',
-        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+        headers: { Authorization: `Bearer ${sessionStorage.getItem('token')}` },
       });
     } catch {}
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
+    sessionStorage.removeItem('token');
+    sessionStorage.removeItem('user');
     setToken(null);
     setUser(null);
   }, []);
