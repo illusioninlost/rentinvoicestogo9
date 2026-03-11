@@ -49,6 +49,7 @@ export default function TenantList() {
                   <th>Phone</th>
                   <th>Email</th>
                   <th>Address</th>
+                  <th className="text-right">Monthly Rent</th>
                   <th>Actions</th>
                 </tr>
               </thead>
@@ -59,6 +60,7 @@ export default function TenantList() {
                     <td>{t.phone || <span className="text-muted">—</span>}</td>
                     <td>{t.email || <span className="text-muted">—</span>}</td>
                     <td>{t.address || <span className="text-muted">—</span>}</td>
+                    <td className="text-right" style={{ fontWeight: 500 }}>{t.monthly_rent ? '$' + Number(t.monthly_rent).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : <span className="text-muted">—</span>}</td>
                     <td>
                       <div className="actions-cell">
                         <button className="btn btn-ghost btn-sm" onClick={() => navigate(`/tenants/${t.id}/edit`)}>Edit</button>

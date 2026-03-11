@@ -7,14 +7,14 @@ export default function TenantForm() {
   const navigate = useNavigate();
   const isEdit = Boolean(id);
 
-  const [form, setForm] = useState({ name: '', phone: '', email: '', address: '' });
+  const [form, setForm] = useState({ name: '', phone: '', email: '', address: '', monthly_rent: '' });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
 
   useEffect(() => {
     if (!isEdit) return;
     apiFetch(`/api/clients/${id}`).then(r => r.json()).then(t => {
-      setForm({ name: t.name, phone: t.phone || '', email: t.email || '', address: t.address || '' });
+      setForm({ name: t.name, phone: t.phone || '', email: t.email || '', address: t.address || '', monthly_rent: t.monthly_rent || '' });
     });
   }, [id, isEdit]);
 
@@ -67,6 +67,10 @@ export default function TenantForm() {
           <div className="form-group">
             <label>Address</label>
             <input required value={form.address} onChange={e => setField('address', e.target.value)} placeholder="Mailing address" />
+          </div>
+          <div className="form-group" style={{ marginTop: 14 }}>
+            <label>Monthly Rent ($)</label>
+            <input required type="number" min="0" step="0.01" value={form.monthly_rent} onChange={e => setField('monthly_rent', e.target.value)} placeholder="0.00" />
           </div>
         </div>
 

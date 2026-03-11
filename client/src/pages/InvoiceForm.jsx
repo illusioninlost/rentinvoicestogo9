@@ -13,11 +13,8 @@ function newItem() {
   return { description: 'Monthly Rent', quantity: 1, unit_price: 0, amount: 0 };
 }
 
-function calcTotals(items, taxRate) {
-  const subtotal = items.reduce((s, it) => s + (it.amount || 0), 0);
-  const tax_amount = subtotal * ((taxRate || 0) / 100);
-  const total = subtotal + tax_amount;
-  return { subtotal, tax_amount, total };
+function calcTotal(items) {
+  return items.reduce((s, it) => s + (it.amount || 0), 0);
 }
 
 export default function InvoiceForm() {
@@ -33,7 +30,6 @@ export default function InvoiceForm() {
     date_created: today(),
     due_date: dueDefault(),
     status: 'unpaid',
-    tax_rate: 0,
     notes: '',
   });
   const [items, setItems] = useState([newItem()]);
@@ -65,7 +61,6 @@ export default function InvoiceForm() {
         date_created: inv.date_created,
         due_date: inv.due_date,
         status: inv.status,
-        tax_rate: inv.tax_rate || 0,
         notes: inv.notes || '',
       });
       setItems(inv.items.length ? inv.items : [newItem()]);
@@ -80,6 +75,13 @@ export default function InvoiceForm() {
     const c = clients.find(c => c.id === parseInt(clientId, 10));
     if (!c) return;
     setForm(f => ({ ...f, client_name: c.name, client_email: c.email || '', client_address: c.address || '' }));
+    if (c.monthly_rent) {
+      setItems(prev => prev.map((it, i) => {
+        if (i !== 0) return it;
+        const unit_price = parseFloat(c.monthly_rent);
+        return { ...it, unit_price, amount: unit_price * parseFloat(it.quantity || 1) };
+      }));
+    }
   }
 
   function updateItem(index, key, val) {
@@ -99,7 +101,7 @@ export default function InvoiceForm() {
   function addItem() { setItems(prev => [...prev, { description: '', quantity: 1, unit_price: 0, amount: 0 }]); }
   function removeItem(i) { setItems(prev => prev.filter((_, idx) => idx !== i)); }
 
-  const { subtotal, tax_amount, total } = calcTotals(items, form.tax_rate);
+  const total = calcTotal(items);
 
   function fmt(n) {
     return '$' + Number(n || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -109,8 +111,7 @@ export default function InvoiceForm() {
     e.preventDefault();
     setSaving(true);
     setError(null);
-    const payload = { ...form, items, subtotal, tax_amount, total,
-      tax_rate: parseFloat(form.tax_rate) || 0 };
+    const payload = { ...form, items, total };
     const url = isEdit ? `/api/invoices/${id}` : '/api/invoices';
     const method = isEdit ? 'PUT' : 'POST';
     const res = await apiFetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
@@ -150,6 +151,7 @@ export default function InvoiceForm() {
           <div className="form-group" style={{ marginBottom: 12 }}>
             <label>Select Tenant</label>
             <select
+              required
               onChange={e => selectClient(e.target.value)}
               defaultValue=""
             >
@@ -209,24 +211,6 @@ export default function InvoiceForm() {
               <textarea value={form.notes} onChange={e => setField('notes', e.target.value)} placeholder="Payment instructions, late fee policy, etc." />
             </div>
             <div className="totals-box" style={{ minWidth: 260 }}>
-              <div className="totals-row">
-                <span>Subtotal</span>
-                <span>{fmt(subtotal)}</span>
-              </div>
-              <div className="totals-row" style={{ alignItems: 'center', gap: 8 }}>
-                <span>Tax Rate</span>
-                <input
-                  type="number" min="0" max="100" step="0.1"
-                  value={form.tax_rate}
-                  onChange={e => setField('tax_rate', e.target.value)}
-                  style={{ width: 70, textAlign: 'right' }}
-                />
-                <span>%</span>
-              </div>
-              <div className="totals-row">
-                <span>Tax</span>
-                <span>{fmt(tax_amount)}</span>
-              </div>
               <div className="totals-row grand">
                 <span>Total Due</span>
                 <span>{fmt(total)}</span>

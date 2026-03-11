@@ -39,7 +39,7 @@ export default function Reports() {
   }
 
   function exportCSV() {
-    const headers = ['Invoice #', 'Tenant', 'Email', 'Property', 'Invoice Date', 'Payment Due', 'Status', 'Subtotal', 'Tax Rate', 'Tax Amount', 'Total', 'Notes'];
+    const headers = ['Invoice #', 'Tenant', 'Email', 'Property', 'Invoice Date', 'Payment Due', 'Status', 'Total', 'Notes'];
     const rows = results.map(inv => [
       inv.invoice_number,
       inv.client_name,
@@ -48,9 +48,6 @@ export default function Reports() {
       inv.date_created,
       inv.due_date,
       inv.status,
-      inv.subtotal,
-      inv.tax_rate,
-      inv.tax_amount,
       inv.total,
       inv.notes || '',
     ].map(v => `"${String(v).replace(/"/g, '""')}"`).join(','));

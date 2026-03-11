@@ -112,16 +112,7 @@ app.post('/api/invoices/:id/email', requireAuth, async (req, res) => {
 
         <!-- Totals -->
         <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;margin-top:16px;">
-          <div style="display:flex;gap:48px;font-size:13px;">
-            <span style="color:#6b7280;">Subtotal</span>
-            <span style="color:#1a1d23;">${fmt(inv.subtotal)}</span>
-          </div>
-          ${inv.tax_rate > 0 ? `
-          <div style="display:flex;gap:48px;font-size:13px;">
-            <span style="color:#6b7280;">Tax (${inv.tax_rate}%)</span>
-            <span style="color:#1a1d23;">${fmt(inv.tax_amount)}</span>
-          </div>` : ''}
-          <div style="display:flex;gap:48px;font-size:16px;font-weight:700;border-top:2px solid #e2e5ea;padding-top:8px;margin-top:4px;">
+          <div style="display:flex;gap:48px;font-size:16px;font-weight:700;border-top:2px solid #e2e5ea;padding-top:8px;">
             <span style="color:#1a1d23;">Total Due</span>
             <span style="color:#1a1d23;">${fmt(inv.total)}</span>
           </div>

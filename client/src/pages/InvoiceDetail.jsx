@@ -130,16 +130,6 @@ export default function InvoiceDetail() {
         </div>
 
         <div className="invoice-totals">
-          <div className="invoice-total-row">
-            <span style={{ color: 'var(--text-muted)' }}>Subtotal</span>
-            <span>{fmt(inv.subtotal)}</span>
-          </div>
-          {inv.tax_rate > 0 && (
-            <div className="invoice-total-row">
-              <span style={{ color: 'var(--text-muted)' }}>Tax ({inv.tax_rate}%)</span>
-              <span>{fmt(inv.tax_amount)}</span>
-            </div>
-          )}
           <div className="invoice-total-row grand">
             <span>Total Due</span>
             <span>{fmt(inv.total)}</span>

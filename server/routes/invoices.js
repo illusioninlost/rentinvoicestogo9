@@ -17,9 +17,9 @@ router.post('/', (req, res) => {
   const inv = req.body;
   const stmt = db.prepare(`
     INSERT INTO invoices
-      (user_id, invoice_number, client_name, client_email, client_address, date_created, due_date, status, items, tax_rate, subtotal, tax_amount, total, notes, property_address)
+      (user_id, invoice_number, client_name, client_email, client_address, date_created, due_date, status, items, total, notes, property_address)
     VALUES
-      (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `);
   try {
     const result = stmt.run(
@@ -27,8 +27,7 @@ router.post('/', (req, res) => {
       inv.invoice_number, inv.client_name, inv.client_email || '', inv.client_address || '',
       inv.date_created, inv.due_date, inv.status || 'unpaid',
       JSON.stringify(inv.items || []),
-      inv.tax_rate || 0, inv.subtotal || 0, inv.tax_amount || 0, inv.total || 0,
-      inv.notes || '', inv.property_address || ''
+      inv.total || 0, inv.notes || '', inv.property_address || ''
     );
     const created = db.prepare('SELECT * FROM invoices WHERE id = ?').get(result.lastInsertRowid);
     res.status(201).json(parseItems(created));
@@ -54,8 +53,7 @@ router.put('/:id', (req, res) => {
     UPDATE invoices SET
       invoice_number = ?, client_name = ?, client_email = ?, client_address = ?,
       date_created = ?, due_date = ?, status = ?, items = ?,
-      tax_rate = ?, subtotal = ?, tax_amount = ?, total = ?, notes = ?,
-      property_address = ?
+      total = ?, notes = ?, property_address = ?
     WHERE id = ? AND user_id = ?
   `);
   try {
@@ -63,8 +61,7 @@ router.put('/:id', (req, res) => {
       inv.invoice_number, inv.client_name, inv.client_email || '', inv.client_address || '',
       inv.date_created, inv.due_date, inv.status || 'unpaid',
       JSON.stringify(inv.items || []),
-      inv.tax_rate || 0, inv.subtotal || 0, inv.tax_amount || 0, inv.total || 0,
-      inv.notes || '', inv.property_address || '',
+      inv.total || 0, inv.notes || '', inv.property_address || '',
       req.params.id, req.userId
     );
     if (result.changes === 0) return res.status(404).json({ error: 'Invoice not found' });

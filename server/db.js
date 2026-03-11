@@ -15,9 +15,6 @@ db.exec(`
     due_date TEXT NOT NULL,
     status TEXT NOT NULL DEFAULT 'unpaid',
     items TEXT NOT NULL DEFAULT '[]',
-    tax_rate REAL NOT NULL DEFAULT 0,
-    subtotal REAL NOT NULL DEFAULT 0,
-    tax_amount REAL NOT NULL DEFAULT 0,
     total REAL NOT NULL DEFAULT 0,
     notes TEXT
   );
@@ -71,5 +68,6 @@ try {
 
 // Rental-specific columns
 try { db.exec("ALTER TABLE invoices ADD COLUMN property_address TEXT NOT NULL DEFAULT ''"); } catch {}
+try { db.exec("ALTER TABLE clients ADD COLUMN monthly_rent REAL NOT NULL DEFAULT 0"); } catch {}
 
 module.exports = db;

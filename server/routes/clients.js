@@ -17,20 +17,20 @@ router.get('/:id', (req, res) => {
 
 // POST /api/clients
 router.post('/', (req, res) => {
-  const { name, address, phone, email } = req.body;
+  const { name, address, phone, email, monthly_rent } = req.body;
   const result = db.prepare(
-    'INSERT INTO clients (user_id, name, address, phone, email) VALUES (?, ?, ?, ?, ?)'
-  ).run(req.userId, name, address || '', phone || '', email || '');
+    'INSERT INTO clients (user_id, name, address, phone, email, monthly_rent) VALUES (?, ?, ?, ?, ?, ?)'
+  ).run(req.userId, name, address || '', phone || '', email || '', monthly_rent || 0);
   const created = db.prepare('SELECT * FROM clients WHERE id = ?').get(result.lastInsertRowid);
   res.status(201).json(created);
 });
 
 // PUT /api/clients/:id
 router.put('/:id', (req, res) => {
-  const { name, address, phone, email } = req.body;
+  const { name, address, phone, email, monthly_rent } = req.body;
   const result = db.prepare(
-    'UPDATE clients SET name = ?, address = ?, phone = ?, email = ? WHERE id = ? AND user_id = ?'
-  ).run(name, address || '', phone || '', email || '', req.params.id, req.userId);
+    'UPDATE clients SET name = ?, address = ?, phone = ?, email = ?, monthly_rent = ? WHERE id = ? AND user_id = ?'
+  ).run(name, address || '', phone || '', email || '', monthly_rent || 0, req.params.id, req.userId);
   if (result.changes === 0) return res.status(404).json({ error: 'Client not found' });
   const updated = db.prepare('SELECT * FROM clients WHERE id = ?').get(req.params.id);
   res.json(updated);
