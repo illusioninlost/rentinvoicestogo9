@@ -8,6 +8,13 @@ router.get('/', (req, res) => {
   res.json(clients);
 });
 
+// GET /api/clients/:id
+router.get('/:id', (req, res) => {
+  const client = db.prepare('SELECT * FROM clients WHERE id = ? AND user_id = ?').get(req.params.id, req.userId);
+  if (!client) return res.status(404).json({ error: 'Tenant not found' });
+  res.json(client);
+});
+
 // POST /api/clients
 router.post('/', (req, res) => {
   const { name, address, phone, email } = req.body;

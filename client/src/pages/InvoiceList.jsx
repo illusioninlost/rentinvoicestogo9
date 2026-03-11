@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { apiFetch } from '../apiFetch';
 import ConfirmModal from '../components/ConfirmModal';
-import ClientModal from '../components/ClientModal';
 
 function fmt(amount) {
   return '$' + Number(amount || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -14,13 +13,14 @@ function StatusBadge({ status }) {
 
 export default function InvoiceList() {
   const [invoices, setInvoices] = useState([]);
+  const [clients, setClients] = useState([]);
   const [confirmId, setConfirmId] = useState(null);
   const [markPaidId, setMarkPaidId] = useState(null);
-  const [showClientModal, setShowClientModal] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
     apiFetch('/api/invoices').then(r => r.json()).then(setInvoices);
+    apiFetch('/api/clients').then(r => r.json()).then(setClients);
   }, []);
 
   async function handleDelete() {
@@ -52,12 +52,17 @@ export default function InvoiceList() {
       <div className="page-header">
         <h1>Rental Invoices</h1>
         <div style={{ display: 'flex', gap: 8 }}>
-          <button className="btn btn-secondary" onClick={() => setShowClientModal(true)}>+ Add Client</button>
+          <Link to="/tenants/new" className="btn btn-secondary">+ Add Tenant</Link>
           <Link to="/invoices/new" className="btn btn-primary">+ New Invoice</Link>
         </div>
       </div>
 
-      <div className="summary-cards">
+      <div className="summary-cards" style={{ gridTemplateColumns: 'repeat(5, 1fr)' }}>
+        <div className="summary-card">
+          <div className="label">Tenants</div>
+          <div className="value">{clients.length}</div>
+          <div className="sub">registered tenant{clients.length !== 1 ? 's' : ''}</div>
+        </div>
         <div className="summary-card">
           <div className="label">Total Invoiced</div>
           <div className="value">{fmt(totalInvoiced)}</div>
@@ -142,12 +147,6 @@ export default function InvoiceList() {
         confirmClassName="btn btn-primary"
         onConfirm={handleMarkPaid}
         onCancel={() => setMarkPaidId(null)}
-      />
-    )}
-    {showClientModal && (
-      <ClientModal
-        onSave={() => setShowClientModal(false)}
-        onCancel={() => setShowClientModal(false)}
       />
     )}
     </>

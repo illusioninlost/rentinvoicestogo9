@@ -4,6 +4,8 @@ import InvoiceList from './pages/InvoiceList';
 import InvoiceForm from './pages/InvoiceForm';
 import InvoiceDetail from './pages/InvoiceDetail';
 import Reports from './pages/Reports';
+import TenantList from './pages/TenantList';
+import TenantForm from './pages/TenantForm';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
 import ResetPassword from './pages/ResetPassword';
@@ -22,6 +24,7 @@ function Navbar() {
       <NavLink to="/" className="navbar-brand">RentInvoicesToGo</NavLink>
       <div className="navbar-links">
         <NavLink to="/" end className={({ isActive }) => isActive ? 'active' : ''}>Invoices</NavLink>
+        <NavLink to="/tenants" className={({ isActive }) => isActive ? 'active' : ''}>Tenants</NavLink>
         <NavLink to="/reports" className={({ isActive }) => isActive ? 'active' : ''}>Reports</NavLink>
       </div>
       {user && (
@@ -59,6 +62,9 @@ export default function App() {
                     <Route path="/invoices/new" element={<InvoiceForm />} />
                     <Route path="/invoices/:id/edit" element={<InvoiceForm />} />
                     <Route path="/invoices/:id" element={<InvoiceDetail />} />
+                    <Route path="/tenants" element={<TenantList />} />
+                    <Route path="/tenants/new" element={<TenantForm />} />
+                    <Route path="/tenants/:id/edit" element={<TenantForm />} />
                     <Route path="/reports" element={<Reports />} />
                   </Routes>
                 </div>

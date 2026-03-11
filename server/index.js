@@ -44,41 +44,96 @@ app.post('/api/invoices/:id/email', requireAuth, async (req, res) => {
   const items = typeof inv.items === 'string' ? JSON.parse(inv.items) : inv.items;
   const fmt = n => '$' + Number(n || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
+  const statusColors = {
+    paid:    { bg: '#dcfce7', color: '#14532d' },
+    unpaid:  { bg: '#fef3c7', color: '#92400e' },
+    overdue: { bg: '#fee2e2', color: '#7f1d1d' },
+  };
+  const badge = statusColors[inv.status] || statusColors.unpaid;
+
   const itemRows = items.map(it => `
     <tr>
-      <td style="padding:8px 12px;border-bottom:1px solid #e2e5ea;">${it.description || ''}</td>
-      <td style="padding:8px 12px;border-bottom:1px solid #e2e5ea;text-align:right;">${it.quantity}</td>
-      <td style="padding:8px 12px;border-bottom:1px solid #e2e5ea;text-align:right;">${fmt(it.unit_price)}</td>
-      <td style="padding:8px 12px;border-bottom:1px solid #e2e5ea;text-align:right;">${fmt(it.amount)}</td>
+      <td style="padding:10px 14px;border-bottom:1px solid #e2e5ea;font-size:13px;">${it.description || '—'}</td>
+      <td style="padding:10px 14px;border-bottom:1px solid #e2e5ea;font-size:13px;text-align:right;">${it.quantity}</td>
+      <td style="padding:10px 14px;border-bottom:1px solid #e2e5ea;font-size:13px;text-align:right;">${fmt(it.unit_price)}</td>
+      <td style="padding:10px 14px;border-bottom:1px solid #e2e5ea;font-size:13px;text-align:right;font-weight:500;">${fmt(it.amount)}</td>
     </tr>`).join('');
 
   const html = `
-    <div style="font-family:Inter,system-ui,sans-serif;max-width:600px;margin:0 auto;color:#1a1d23;">
-      <div style="background:#2563eb;padding:24px 32px;border-radius:8px 8px 0 0;">
-        <span style="color:#fff;font-size:20px;font-weight:700;">RentInvoicesToGo</span>
-      </div>
-      <div style="background:#fff;border:1px solid #e2e5ea;border-top:none;padding:32px;border-radius:0 0 8px 8px;">
-        <h2 style="margin:0 0 4px;">Invoice ${inv.invoice_number}</h2>
-        <p style="margin:0 0 24px;color:#6b7280;">Due: <strong>${inv.due_date}</strong></p>
-        <p>Hi ${inv.client_name},</p>
-        <p>Please find your rental invoice details below.</p>
-        <table style="width:100%;border-collapse:collapse;margin:24px 0;font-size:14px;">
+    <div style="font-family:system-ui,sans-serif;max-width:680px;margin:0 auto;background:#f7f8fa;padding:24px;">
+      <div style="background:#fff;border:1px solid #e2e5ea;border-radius:8px;padding:40px;box-shadow:0 1px 3px rgba(0,0,0,0.08);">
+
+        <!-- Header -->
+        <table style="width:100%;border-collapse:collapse;margin-bottom:32px;">
+          <tr>
+            <td style="vertical-align:top;">
+              <div style="display:flex;align-items:center;gap:8px;">
+                <span style="font-size:22px;font-weight:700;color:#2563eb;letter-spacing:-0.5px;">&#127968; RentInvoicesToGo</span>
+              </div>
+              <div style="font-size:20px;font-weight:700;margin-top:8px;color:#1a1d23;">${inv.invoice_number}</div>
+            </td>
+            <td style="vertical-align:top;text-align:right;">
+              <span style="display:inline-block;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:600;letter-spacing:0.3px;text-transform:uppercase;background:${badge.bg};color:${badge.color};">${inv.status}</span>
+              <div style="margin-top:10px;font-size:13px;color:#6b7280;">
+                <div>Invoice Date: <strong style="color:#1a1d23;">${inv.date_created}</strong></div>
+                <div style="margin-top:2px;">Payment Due: <strong style="color:#1a1d23;">${inv.due_date}</strong></div>
+              </div>
+            </td>
+          </tr>
+        </table>
+
+        <!-- Rental Property -->
+        ${inv.property_address ? `
+        <div style="margin-bottom:24px;">
+          <div style="font-size:11px;font-weight:600;color:#6b7280;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;">Rental Property</div>
+          <div style="font-weight:600;font-size:14px;color:#1a1d23;">${inv.property_address}</div>
+        </div>` : ''}
+
+        <!-- Bill To -->
+        <div style="margin-bottom:32px;">
+          <div style="font-size:11px;font-weight:600;color:#6b7280;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;">Bill To</div>
+          <div style="font-weight:600;font-size:14px;color:#1a1d23;">${inv.client_name}</div>
+          ${inv.client_address ? `<div style="font-size:13px;color:#6b7280;margin-top:2px;">${inv.client_address}</div>` : ''}
+          ${inv.client_email ? `<div style="font-size:13px;color:#6b7280;margin-top:2px;">${inv.client_email}</div>` : ''}
+        </div>
+
+        <!-- Line Items -->
+        <table style="width:100%;border-collapse:collapse;margin-bottom:16px;">
           <thead>
             <tr style="background:#f7f8fa;">
-              <th style="padding:8px 12px;text-align:left;border-bottom:2px solid #e2e5ea;">Description</th>
-              <th style="padding:8px 12px;text-align:right;border-bottom:2px solid #e2e5ea;">Qty</th>
-              <th style="padding:8px 12px;text-align:right;border-bottom:2px solid #e2e5ea;">Unit Price</th>
-              <th style="padding:8px 12px;text-align:right;border-bottom:2px solid #e2e5ea;">Amount</th>
+              <th style="padding:10px 14px;text-align:left;font-size:12px;font-weight:600;color:#6b7280;text-transform:uppercase;letter-spacing:0.4px;border-bottom:1px solid #e2e5ea;">Description</th>
+              <th style="padding:10px 14px;text-align:right;font-size:12px;font-weight:600;color:#6b7280;text-transform:uppercase;letter-spacing:0.4px;border-bottom:1px solid #e2e5ea;">Qty</th>
+              <th style="padding:10px 14px;text-align:right;font-size:12px;font-weight:600;color:#6b7280;text-transform:uppercase;letter-spacing:0.4px;border-bottom:1px solid #e2e5ea;">Unit Price</th>
+              <th style="padding:10px 14px;text-align:right;font-size:12px;font-weight:600;color:#6b7280;text-transform:uppercase;letter-spacing:0.4px;border-bottom:1px solid #e2e5ea;">Amount</th>
             </tr>
           </thead>
           <tbody>${itemRows}</tbody>
         </table>
-        <div style="text-align:right;font-size:14px;">
-          <div style="margin-bottom:6px;color:#6b7280;">Subtotal: <strong style="color:#1a1d23;">${fmt(inv.subtotal)}</strong></div>
-          ${inv.tax_rate > 0 ? `<div style="margin-bottom:6px;color:#6b7280;">Tax (${inv.tax_rate}%): <strong style="color:#1a1d23;">${fmt(inv.tax_amount)}</strong></div>` : ''}
-          <div style="font-size:18px;font-weight:700;border-top:2px solid #e2e5ea;padding-top:10px;margin-top:6px;">Total Due: ${fmt(inv.total)}</div>
+
+        <!-- Totals -->
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;margin-top:16px;">
+          <div style="display:flex;gap:48px;font-size:13px;">
+            <span style="color:#6b7280;">Subtotal</span>
+            <span style="color:#1a1d23;">${fmt(inv.subtotal)}</span>
+          </div>
+          ${inv.tax_rate > 0 ? `
+          <div style="display:flex;gap:48px;font-size:13px;">
+            <span style="color:#6b7280;">Tax (${inv.tax_rate}%)</span>
+            <span style="color:#1a1d23;">${fmt(inv.tax_amount)}</span>
+          </div>` : ''}
+          <div style="display:flex;gap:48px;font-size:16px;font-weight:700;border-top:2px solid #e2e5ea;padding-top:8px;margin-top:4px;">
+            <span style="color:#1a1d23;">Total Due</span>
+            <span style="color:#1a1d23;">${fmt(inv.total)}</span>
+          </div>
         </div>
-        ${inv.notes ? `<p style="margin-top:24px;color:#6b7280;font-size:13px;border-top:1px solid #e2e5ea;padding-top:16px;">${inv.notes}</p>` : ''}
+
+        <!-- Notes -->
+        ${inv.notes ? `
+        <div style="margin-top:24px;border-top:1px solid #e2e5ea;padding-top:16px;">
+          <div style="font-size:11px;font-weight:600;color:#6b7280;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;">Notes</div>
+          <p style="font-size:13px;color:#6b7280;margin:0;white-space:pre-line;">${inv.notes}</p>
+        </div>` : ''}
+
       </div>
     </div>`;
 
