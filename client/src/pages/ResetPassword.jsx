@@ -1,11 +1,12 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 
 export default function ResetPassword() {
-  const [step, setStep] = useState('request'); // 'request' | 'reset' | 'done'
+  const [searchParams] = useSearchParams();
+  const urlToken = searchParams.get('token') || '';
+  const [step, setStep] = useState(urlToken ? 'reset' : 'request');
   const [email, setEmail] = useState('');
-  const [devToken, setDevToken] = useState('');
-  const [form, setForm] = useState({ token: '', password: '', confirm: '' });
+  const [form, setForm] = useState({ token: urlToken, password: '', confirm: '' });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -21,7 +22,6 @@ export default function ResetPassword() {
       });
       const data = await res.json();
       if (!res.ok) { setError(data.error || 'Request failed.'); return; }
-      setDevToken(data.devToken || '');
       setStep('reset');
     } catch {
       setError('Network error. Please try again.');
@@ -104,12 +104,6 @@ export default function ResetPassword() {
         {step === 'reset' && (
           <>
             <p className="auth-subtitle">Check your email for the reset code and enter it below.</p>
-            {devToken && (
-              <div className="auth-dev-notice">
-                <strong>Dev mode:</strong> Your reset token is<br />
-                <code className="auth-dev-token">{devToken}</code>
-              </div>
-            )}
             {error && <div className="auth-error">{error}</div>}
             <form onSubmit={handleReset} className="auth-form">
               <div className="form-group">

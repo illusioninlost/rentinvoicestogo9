@@ -1,8 +1,37 @@
 const express = require('express');
 const crypto = require('crypto');
+const nodemailer = require('nodemailer');
 const db = require('../db');
+const emailConfig = require('../email.config');
 
 const router = express.Router();
+
+async function sendResetEmail(toEmail, token) {
+  const appUrl = process.env.APP_URL || 'http://localhost:5173';
+  const resetLink = `${appUrl}/reset-password?token=${token}`;
+
+  const transporter = nodemailer.createTransport({
+    host: emailConfig.host,
+    port: emailConfig.port,
+    secure: false,
+    auth: { user: emailConfig.user, pass: emailConfig.pass },
+  });
+
+  await transporter.sendMail({
+    from: emailConfig.from || emailConfig.user,
+    to: toEmail,
+    subject: 'Reset your RentInvoicesToGo password',
+    html: `
+      <div style="font-family:system-ui,sans-serif;max-width:480px;margin:0 auto;padding:24px;">
+        <div style="font-size:20px;font-weight:700;color:#2563eb;margin-bottom:24px;">RentInvoicesToGo</div>
+        <p style="font-size:15px;color:#1a1d23;">We received a request to reset your password.</p>
+        <p style="font-size:15px;color:#1a1d23;">Click the button below or paste the token into the reset form. This link expires in <strong>1 hour</strong>.</p>
+        <a href="${resetLink}" style="display:inline-block;margin:16px 0;padding:12px 24px;background:#2563eb;color:#fff;border-radius:6px;text-decoration:none;font-weight:600;font-size:15px;">Reset password</a>
+        <p style="font-size:13px;color:#6b7280;margin-top:8px;">Or copy this token: <code style="background:#f3f4f6;padding:2px 6px;border-radius:4px;">${token}</code></p>
+        <p style="font-size:12px;color:#9ca3af;margin-top:24px;">If you didn't request this, you can safely ignore this email.</p>
+      </div>`,
+  });
+}
 
 function hashPassword(password) {
   const salt = crypto.randomBytes(16).toString('hex');
@@ -68,7 +97,7 @@ router.post('/logout', (req, res) => {
 });
 
 // POST /api/auth/request-reset
-router.post('/request-reset', (req, res) => {
+router.post('/request-reset', async (req, res) => {
   const { email } = req.body;
   if (!email) return res.status(400).json({ error: 'Email is required.' });
 
@@ -83,10 +112,14 @@ router.post('/request-reset', (req, res) => {
   const expires = new Date(Date.now() + 60 * 60 * 1000).toISOString(); // 1 hour
   db.prepare('INSERT INTO password_resets (user_id, token, expires_at) VALUES (?, ?, ?)').run(user.id, token, expires);
 
-  console.log(`\n[Password Reset] Token for ${email}: ${token}\n`);
+  try {
+    await sendResetEmail(email, token);
+  } catch (err) {
+    console.error('[Password Reset] Failed to send email:', err.message);
+    return res.status(500).json({ error: 'Failed to send reset email. Please try again.' });
+  }
 
-  // In production, send an email with a link. For development, return the token directly.
-  res.json({ ok: true, devToken: token, message: 'Reset token generated.' });
+  res.json({ ok: true, message: 'Reset token generated.' });
 });
 
 // POST /api/auth/reset-password
