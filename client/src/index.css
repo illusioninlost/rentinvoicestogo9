@@ -399,3 +399,109 @@ tbody tr:hover { background: #fafbfc; }
   .page { padding: 0; }
   .invoice-detail { box-shadow: none; border: none; }
 }
+
+/* App footer */
+.app-footer {
+  margin-top: auto;
+  padding: 16px 24px;
+  text-align: center;
+  font-size: 12px;
+  color: var(--text-muted);
+  border-top: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+.app-footer a { color: var(--text-muted); text-decoration: none; }
+.app-footer a:hover { color: var(--primary); }
+
+/* Legal pages (TOS / Privacy) */
+.legal-page {
+  min-height: 100vh;
+  background: var(--bg);
+  display: flex;
+  flex-direction: column;
+}
+.legal-header {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 0 24px;
+  height: 56px;
+  display: flex;
+  align-items: center;
+}
+.legal-brand {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--primary);
+  text-decoration: none;
+}
+.legal-content {
+  max-width: 720px;
+  width: 100%;
+  margin: 40px auto;
+  padding: 0 24px;
+  flex: 1;
+}
+.legal-content h1 {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 6px;
+}
+.legal-date {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-bottom: 24px;
+}
+.legal-content h2 {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text);
+  margin-top: 28px;
+  margin-bottom: 8px;
+}
+.legal-content p {
+  font-size: 14px;
+  color: #374151;
+  line-height: 1.7;
+  margin-bottom: 10px;
+}
+.legal-content ul {
+  padding-left: 20px;
+  margin-bottom: 10px;
+}
+.legal-content ul li {
+  font-size: 14px;
+  color: #374151;
+  line-height: 1.7;
+  margin-bottom: 4px;
+}
+.legal-content a { color: var(--primary); }
+.legal-footer {
+  text-align: center;
+  padding: 20px;
+  font-size: 13px;
+  color: var(--text-muted);
+  border-top: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+.legal-footer a { color: var(--text-muted); text-decoration: none; }
+.legal-footer a:hover { color: var(--primary); }
+
+/* TOS checkbox on signup */
+.auth-tos-label {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--text-muted);
+  line-height: 1.5;
+  cursor: pointer;
+}
+.auth-tos-label input[type="checkbox"] { margin-top: 2px; flex-shrink: 0; }
+.auth-tos-label a { color: var(--primary); }

@@ -3,3 +3,4 @@ server/invoices.db
 dist/
 .env
 .claude/
+CLAUDE.md

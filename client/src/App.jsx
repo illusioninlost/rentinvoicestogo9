@@ -11,6 +11,8 @@ import Login from './pages/Login';
 import Signup from './pages/Signup';
 import ResetPassword from './pages/ResetPassword';
 import Billing from './pages/Billing';
+import TermsOfService from './pages/TermsOfService';
+import PrivacyPolicy from './pages/PrivacyPolicy';
 
 function Navbar() {
   const { user, logout } = useAuth();
@@ -80,6 +82,8 @@ export default function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
           <Route path="/reset-password" element={<ResetPassword />} />
+          <Route path="/tos" element={<TermsOfService />} />
+          <Route path="/privacy" element={<PrivacyPolicy />} />
           <Route
             path="/*"
             element={
@@ -97,6 +101,13 @@ export default function App() {
                     <Route path="/reports" element={<Reports />} />
                     <Route path="/billing" element={<Billing />} />
                   </Routes>
+                  <footer className="app-footer">
+                    <Link to="/tos">Terms of Service</Link>
+                    <span>·</span>
+                    <Link to="/privacy">Privacy Policy</Link>
+                    <span>·</span>
+                    <a href="mailto:itsoveragainagain@gmail.com">Contact</a>
+                  </footer>
                 </div>
               </ProtectedRoute>
             }

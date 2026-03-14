@@ -31,16 +31,9 @@ app.post('/api/billing/webhook', express.raw({ type: 'application/json' }), asyn
   if (event.type === 'checkout.session.completed') {
     const session = event.data.object;
     await db.query(
-      'UPDATE users SET plan = $1, stripe_customer_id = $2 WHERE stripe_customer_id = $2',
+      'UPDATE users SET plan = $1 WHERE stripe_customer_id = $2',
       ['pro', session.customer]
     );
-    // Handle case where customer was just created and not yet saved
-    if (session.customer_email) {
-      await db.query(
-        'UPDATE users SET plan = $1, stripe_customer_id = $2 WHERE email = $3 AND stripe_customer_id IS NULL',
-        ['pro', session.customer, session.customer_email]
-      );
-    }
   }
 
   if (event.type === 'customer.subscription.deleted') {

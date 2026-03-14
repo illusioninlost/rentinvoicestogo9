@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
@@ -6,6 +7,7 @@ export default function Signup() {
   const { saveSession } = useAuth();
   const navigate = useNavigate();
   const [form, setForm] = useState({ name: '', email: '', phone: '', password: '', confirm: '' });
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -22,6 +24,10 @@ export default function Signup() {
     }
     if (form.password.length < 8) {
       setError('Password must be at least 8 characters.');
+      return;
+    }
+    if (!agreedToTerms) {
+      setError('You must agree to the Terms of Service and Privacy Policy.');
       return;
     }
     setLoading(true);
@@ -107,6 +113,14 @@ export default function Signup() {
               required
             />
           </div>
+          <label className="auth-tos-label">
+            <input
+              type="checkbox"
+              checked={agreedToTerms}
+              onChange={e => setAgreedToTerms(e.target.checked)}
+            />
+            I agree to the <Link to="/tos" target="_blank">Terms of Service</Link> and <Link to="/privacy" target="_blank">Privacy Policy</Link>
+          </label>
           <button type="submit" className="btn btn-primary auth-submit" disabled={loading}>
             {loading ? 'Creating account...' : 'Create account'}
           </button>
