@@ -139,13 +139,18 @@ export default function InvoiceList() {
       </div>
     </main>
 
-    {confirmId && (
-      <ConfirmModal
-        message="Delete this invoice? This cannot be undone."
-        onConfirm={handleDelete}
-        onCancel={() => setConfirmId(null)}
-      />
-    )}
+    {confirmId && (() => {
+      const inv = invoices.find(i => i.id === confirmId);
+      const outstanding = inv && (inv.status === 'unpaid' || inv.status === 'overdue');
+      return (
+        <ConfirmModal
+          warning={outstanding ? `This invoice is ${inv.status} and may have already been sent to the tenant.` : undefined}
+          message="Delete this invoice? This cannot be undone."
+          onConfirm={handleDelete}
+          onCancel={() => setConfirmId(null)}
+        />
+      );
+    })()}
     {markPaidId && (
       <ConfirmModal
         message="Mark this invoice as paid?"

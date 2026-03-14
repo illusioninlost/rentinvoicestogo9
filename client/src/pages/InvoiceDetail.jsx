@@ -155,6 +155,7 @@ export default function InvoiceDetail() {
 
     {showConfirm && (
       <ConfirmModal
+        warning={(inv.status === 'unpaid' || inv.status === 'overdue') ? `This invoice is ${inv.status} and may have already been sent to the tenant.` : undefined}
         message="Delete this invoice? This cannot be undone."
         onConfirm={handleDelete}
         onCancel={() => setShowConfirm(false)}
