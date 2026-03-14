@@ -4,15 +4,17 @@ const db = require('../db');
 const dns = require('dns').promises;
 
 async function emailDomainExists(email) {
+  const domain = email.split('@')[1];
   try {
-    const domain = email.split('@')[1];
     const records = await Promise.race([
       dns.resolveMx(domain),
       new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 3000)),
     ]);
     return records && records.length > 0;
-  } catch {
-    return null; // null = unknown (DNS timeout/error) — allow through
+  } catch (err) {
+    if (err.message === 'timeout') return null; // DNS slow — allow through
+    if (err.code === 'ENOTFOUND' || err.code === 'ENODATA' || err.code === 'ESERVFAIL') return false; // domain doesn't exist
+    return null; // other unknown error — allow through
   }
 }
 
