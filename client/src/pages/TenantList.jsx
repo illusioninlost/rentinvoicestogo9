@@ -23,7 +23,7 @@ export default function TenantList() {
     <main className="page">
       <div className="page-header">
         <h1>Tenants</h1>
-        <Link to="/tenants/new" className="btn btn-primary">+ New Tenant</Link>
+        <Link to="/tenants/new" className="btn btn-primary" data-tooltip="Create a new tenant">+ New Tenant</Link>
       </div>
 
       <div className="summary-cards" style={{ gridTemplateColumns: 'repeat(1, 200px)' }}>
@@ -59,7 +59,7 @@ export default function TenantList() {
                     <td style={{ fontWeight: 500 }}>
                       {t.name}
                       {t.recurring_enabled && (
-                        <span style={{ marginLeft: 8, fontSize: 10, fontWeight: 600, background: '#dbeafe', color: '#1d4ed8', borderRadius: 4, padding: '2px 6px', textTransform: 'uppercase', letterSpacing: '0.3px' }}>Auto</span>
+                        <span style={{ marginLeft: 8, fontSize: 10, fontWeight: 600, background: '#dbeafe', color: '#1d4ed8', borderRadius: 4, padding: '2px 6px', textTransform: 'uppercase', letterSpacing: '0.3px' }} data-tooltip="Auto-generates a recurring invoice each month">Auto</span>
                       )}
                     </td>
                     <td>{t.phone || <span className="text-muted">—</span>}</td>
@@ -68,8 +68,8 @@ export default function TenantList() {
                     <td className="text-right" style={{ fontWeight: 500 }}>{t.monthly_rent ? '$' + Number(t.monthly_rent).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : <span className="text-muted">—</span>}</td>
                     <td>
                       <div className="actions-cell">
-                        <button className="btn btn-ghost btn-sm" onClick={() => navigate(`/tenants/${t.id}/edit`)}>Edit</button>
-                        <button className="btn btn-ghost btn-sm" style={{ color: 'var(--danger)' }} onClick={() => setConfirmId(t.id)}>Delete</button>
+                        <button className="btn btn-ghost btn-sm" data-tooltip="Edit tenant details" onClick={() => navigate(`/tenants/${t.id}/edit`)}>Edit</button>
+                        <button className="btn btn-ghost btn-sm" style={{ color: 'var(--danger)' }} data-tooltip="Permanently delete this tenant" onClick={() => setConfirmId(t.id)}>Delete</button>
                       </div>
                     </td>
                   </tr>

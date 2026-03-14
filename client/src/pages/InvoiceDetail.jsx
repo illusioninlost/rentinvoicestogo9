@@ -7,8 +7,14 @@ function fmt(n) {
   return '$' + Number(n || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
+const STATUS_TOOLTIPS = {
+  paid: 'Payment received',
+  unpaid: 'Payment not yet received',
+  overdue: 'Past due date — payment not received',
+};
+
 function StatusBadge({ status }) {
-  return <span className={`badge badge-${status}`}>{status}</span>;
+  return <span className={`badge badge-${status}`} data-tooltip={STATUS_TOOLTIPS[status]}>{status}</span>;
 }
 
 export default function InvoiceDetail() {
@@ -47,13 +53,13 @@ export default function InvoiceDetail() {
     <>
     <main className="page">
       <div className="invoice-actions">
-        <Link to="/" className="btn btn-secondary btn-sm">← Back</Link>
-        <Link to={`/invoices/${id}/edit`} className="btn btn-secondary btn-sm">Edit</Link>
-        <button className="btn btn-danger btn-sm" onClick={() => setShowConfirm(true)}>Delete</button>
-        <button className="btn btn-secondary btn-sm" onClick={handleEmail} disabled={emailStatus === 'sending'}>
+        <Link to="/" className="btn btn-secondary btn-sm" data-tooltip="Back to invoice list">← Back</Link>
+        <Link to={`/invoices/${id}/edit`} className="btn btn-secondary btn-sm" data-tooltip="Edit this invoice">Edit</Link>
+        <button className="btn btn-danger btn-sm" data-tooltip="Permanently delete this invoice" onClick={() => setShowConfirm(true)}>Delete</button>
+        <button className="btn btn-secondary btn-sm" data-tooltip="Send invoice to tenant's email" onClick={handleEmail} disabled={emailStatus === 'sending'}>
           {emailStatus === 'sending' ? 'Sending…' : 'Email to Tenant'}
         </button>
-        <button className="btn btn-primary btn-sm" onClick={() => window.print()}>Print / PDF</button>
+        <button className="btn btn-primary btn-sm" data-tooltip="Open print dialog to save as PDF" onClick={() => window.print()}>Print / PDF</button>
       </div>
 
       {emailStatus === 'success' && (

@@ -7,8 +7,14 @@ function fmt(amount) {
   return '$' + Number(amount || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
+const STATUS_TOOLTIPS = {
+  paid: 'Payment received',
+  unpaid: 'Payment not yet received',
+  overdue: 'Past due date — payment not received',
+};
+
 function StatusBadge({ status }) {
-  return <span className={`badge badge-${status}`}>{status}</span>;
+  return <span className={`badge badge-${status}`} data-tooltip={STATUS_TOOLTIPS[status]}>{status}</span>;
 }
 
 export default function InvoiceList() {
@@ -52,8 +58,8 @@ export default function InvoiceList() {
       <div className="page-header">
         <h1>Rental Invoices</h1>
         <div style={{ display: 'flex', gap: 8 }}>
-          <Link to="/tenants/new" className="btn btn-secondary">+ Add Tenant</Link>
-          <Link to="/invoices/new" className="btn btn-primary">+ New Invoice</Link>
+          <Link to="/tenants/new" className="btn btn-secondary" data-tooltip="Create a new tenant">+ Add Tenant</Link>
+          <Link to="/invoices/new" className="btn btn-primary" data-tooltip="Create a new invoice">+ New Invoice</Link>
         </div>
       </div>
 
@@ -116,12 +122,12 @@ export default function InvoiceList() {
                     <td className="text-right" style={{ fontWeight: 500 }}>{fmt(inv.total)}</td>
                     <td>
                       <div className="actions-cell">
-                        <button className="btn btn-ghost btn-sm" onClick={() => navigate(`/invoices/${inv.id}`)}>View</button>
-                        <button className="btn btn-ghost btn-sm" onClick={() => navigate(`/invoices/${inv.id}/edit`)}>Edit</button>
+                        <button className="btn btn-ghost btn-sm" data-tooltip="View invoice details" onClick={() => navigate(`/invoices/${inv.id}`)}>View</button>
+                        <button className="btn btn-ghost btn-sm" data-tooltip="Edit this invoice" onClick={() => navigate(`/invoices/${inv.id}/edit`)}>Edit</button>
                         {inv.status !== 'paid' && (
-                          <button className="btn btn-ghost btn-sm" style={{ color: 'var(--success)' }} onClick={() => setMarkPaidId(inv.id)}>Mark Paid</button>
+                          <button className="btn btn-ghost btn-sm" style={{ color: 'var(--success)' }} data-tooltip="Mark this invoice as paid" onClick={() => setMarkPaidId(inv.id)}>Mark Paid</button>
                         )}
-                        <button className="btn btn-ghost btn-sm" style={{ color: 'var(--danger)' }} onClick={() => setConfirmId(inv.id)}>Delete</button>
+                        <button className="btn btn-ghost btn-sm" style={{ color: 'var(--danger)' }} data-tooltip="Permanently delete this invoice" onClick={() => setConfirmId(inv.id)}>Delete</button>
                       </div>
                     </td>
                   </tr>

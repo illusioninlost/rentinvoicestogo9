@@ -6,8 +6,14 @@ function fmt(n) {
   return '$' + Number(n || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
+const STATUS_TOOLTIPS = {
+  paid: 'Payment received',
+  unpaid: 'Payment not yet received',
+  overdue: 'Past due date — payment not received',
+};
+
 function StatusBadge({ status }) {
-  return <span className={`badge badge-${status}`}>{status}</span>;
+  return <span className={`badge badge-${status}`} data-tooltip={STATUS_TOOLTIPS[status]}>{status}</span>;
 }
 
 export default function Reports() {
@@ -93,15 +99,15 @@ export default function Reports() {
             </select>
           </div>
           <div style={{ display: 'flex', gap: 8, alignItems: 'flex-end' }}>
-            <button type="submit" className="btn btn-primary" disabled={loading}>{loading ? 'Searching…' : 'Apply Filters'}</button>
-            {results !== null && <button type="button" className="btn btn-secondary" onClick={clearFilters}>Clear</button>}
+            <button type="submit" className="btn btn-primary" data-tooltip="Search invoices with selected filters" disabled={loading}>{loading ? 'Searching…' : 'Apply Filters'}</button>
+            {results !== null && <button type="button" className="btn btn-secondary" data-tooltip="Reset all filters" onClick={clearFilters}>Clear</button>}
           </div>
         </div>
       </form>
 
       {results !== null && results.length > 0 && (
         <div style={{ display: 'flex', justifyContent: 'flex-start', marginTop: 12, marginBottom: 16 }}>
-          <button className="btn btn-secondary" onClick={exportCSV}>Export to CSV</button>
+          <button className="btn btn-secondary" data-tooltip="Download filtered results as a CSV file" onClick={exportCSV}>Export to CSV</button>
         </div>
       )}
 
