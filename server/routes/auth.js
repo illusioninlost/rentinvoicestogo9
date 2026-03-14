@@ -1,10 +1,35 @@
 const express = require('express');
 const crypto = require('crypto');
 const nodemailer = require('nodemailer');
+const rateLimit = require('express-rate-limit');
 const db = require('../db');
 const emailConfig = require('../email.config');
 
 const router = express.Router();
+
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  message: { error: 'Too many login attempts. Please try again in 15 minutes.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+const signupLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 10,
+  message: { error: 'Too many accounts created from this IP. Please try again later.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+const resetLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 5,
+  message: { error: 'Too many password reset requests. Please try again in an hour.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
 
 async function sendResetEmail(toEmail, token) {
   const appUrl = process.env.APP_URL || 'http://localhost:5173';
@@ -50,7 +75,7 @@ function generateToken() {
 }
 
 // POST /api/auth/signup
-router.post('/signup', async (req, res) => {
+router.post('/signup', signupLimiter, async (req, res) => {
   const { name, email, phone, password } = req.body;
   if (!name || !email || !password) {
     return res.status(400).json({ error: 'Name, email, and password are required.' });
@@ -67,13 +92,14 @@ router.post('/signup', async (req, res) => {
   const userId = userResult.rows[0].id;
 
   const token = generateToken();
-  await db.query('INSERT INTO sessions (user_id, token) VALUES ($1, $2)', [userId, token]);
+  const expires = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+  await db.query('INSERT INTO sessions (user_id, token, expires_at) VALUES ($1, $2, $3)', [userId, token, expires]);
 
   res.status(201).json({ token, user: { id: userId, name, email, phone } });
 });
 
 // POST /api/auth/login
-router.post('/login', async (req, res) => {
+router.post('/login', loginLimiter, async (req, res) => {
   const { email, password } = req.body;
   if (!email || !password) return res.status(400).json({ error: 'Email and password are required.' });
 
@@ -84,7 +110,8 @@ router.post('/login', async (req, res) => {
   }
 
   const token = generateToken();
-  await db.query('INSERT INTO sessions (user_id, token) VALUES ($1, $2)', [user.id, token]);
+  const expires = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+  await db.query('INSERT INTO sessions (user_id, token, expires_at) VALUES ($1, $2, $3)', [user.id, token, expires]);
 
   res.json({ token, user: { id: user.id, name: user.name, email: user.email, phone: user.phone } });
 });
@@ -100,7 +127,7 @@ router.post('/logout', async (req, res) => {
 });
 
 // POST /api/auth/request-reset
-router.post('/request-reset', async (req, res) => {
+router.post('/request-reset', resetLimiter, async (req, res) => {
   const { email } = req.body;
   if (!email) return res.status(400).json({ error: 'Email is required.' });
 

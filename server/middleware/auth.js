@@ -6,7 +6,7 @@ async function requireAuth(req, res, next) {
     return res.status(401).json({ error: 'Unauthorized' });
   }
   const token = header.slice(7);
-  const result = await db.query('SELECT * FROM sessions WHERE token = $1', [token]);
+  const result = await db.query('SELECT * FROM sessions WHERE token = $1 AND expires_at > NOW()', [token]);
   if (!result.rows[0]) return res.status(401).json({ error: 'Invalid or expired session' });
   req.userId = result.rows[0].user_id;
   next();
