@@ -1,6 +1,48 @@
 const express = require('express');
 const router = express.Router();
 const db = require('../db');
+const dns = require('dns').promises;
+
+async function emailDomainExists(email) {
+  try {
+    const domain = email.split('@')[1];
+    const records = await Promise.race([
+      dns.resolveMx(domain),
+      new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 3000)),
+    ]);
+    return records && records.length > 0;
+  } catch {
+    return null; // null = unknown (DNS timeout/error) — allow through
+  }
+}
+
+function validateClient({ name, email, phone, address, monthly_rent, late_fee }) {
+  if (!name || !name.trim()) return 'Name is required.';
+
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+  if (!email || !emailRegex.test(email)) return 'A valid email address is required.';
+
+  if (phone) {
+    const digits = phone.replace(/\D/g, '');
+    const valid = digits.length === 10 || (digits.length === 11 && digits[0] === '1');
+    if (!valid) return 'Phone number must be 10 digits.';
+  }
+
+  if (address && (!/\d/.test(address) || address.trim().length < 5))
+    return 'Address must include a street number (e.g. 123 Main St).';
+
+  const rent = parseFloat(monthly_rent);
+  if (isNaN(rent) || rent <= 0) return 'Monthly rent must be greater than $0.';
+  if (rent > 50000) return 'Monthly rent exceeds the maximum allowed ($50,000).';
+
+  if (late_fee !== undefined && late_fee !== '') {
+    const fee = parseFloat(late_fee);
+    if (isNaN(fee) || fee < 0) return 'Late fee cannot be negative.';
+    if (fee > 10000) return 'Late fee exceeds the maximum allowed ($10,000).';
+  }
+
+  return null;
+}
 
 // GET /api/clients
 router.get('/', async (req, res) => {
@@ -26,6 +68,13 @@ router.post('/', async (req, res) => {
   }
 
   const { name, address, phone, email, monthly_rent, recurring_enabled, recurring_day, late_fee } = req.body;
+
+  const validationError = validateClient(req.body);
+  if (validationError) return res.status(400).json({ error: validationError });
+
+  const domainOk = await emailDomainExists(email);
+  if (domainOk === false) return res.status(400).json({ error: 'Email domain does not appear to exist. Please check the email address.' });
+
   const result = await db.query(
     'INSERT INTO clients (user_id, name, address, phone, email, monthly_rent, recurring_enabled, recurring_day, late_fee) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *',
     [req.userId, name, address || '', phone || '', email || '', monthly_rent || 0, recurring_enabled || false, recurring_day || 1, late_fee || 0]
@@ -36,6 +85,13 @@ router.post('/', async (req, res) => {
 // PUT /api/clients/:id
 router.put('/:id', async (req, res) => {
   const { name, address, phone, email, monthly_rent, recurring_enabled, recurring_day, late_fee } = req.body;
+
+  const validationError = validateClient(req.body);
+  if (validationError) return res.status(400).json({ error: validationError });
+
+  const domainOk = await emailDomainExists(email);
+  if (domainOk === false) return res.status(400).json({ error: 'Email domain does not appear to exist. Please check the email address.' });
+
   const result = await db.query(
     'UPDATE clients SET name = $1, address = $2, phone = $3, email = $4, monthly_rent = $5, recurring_enabled = $6, recurring_day = $7, late_fee = $8 WHERE id = $9 AND user_id = $10 RETURNING *',
     [name, address || '', phone || '', email || '', monthly_rent || 0, recurring_enabled || false, recurring_day || 1, late_fee || 0, req.params.id, req.userId]

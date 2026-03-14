@@ -23,8 +23,36 @@ export default function TenantForm() {
     setForm(f => ({ ...f, [key]: val }));
   }
 
+  function validate() {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+    if (!emailRegex.test(form.email)) return 'Please enter a valid email address (e.g. name@example.com).';
+
+    if (form.phone) {
+      const digits = form.phone.replace(/\D/g, '');
+      const valid = digits.length === 10 || (digits.length === 11 && digits[0] === '1');
+      if (!valid) return 'Phone number must be 10 digits (e.g. (555) 000-0000).';
+    }
+
+    if (!/\d/.test(form.address) || form.address.trim().length < 5)
+      return 'Address must include a street number (e.g. 123 Main St, City, ST 00000).';
+
+    const rent = parseFloat(form.monthly_rent);
+    if (isNaN(rent) || rent <= 0) return 'Monthly rent must be greater than $0.';
+    if (rent > 50000) return 'Monthly rent exceeds the maximum allowed ($50,000).';
+
+    if (form.late_fee) {
+      const fee = parseFloat(form.late_fee);
+      if (fee < 0) return 'Late fee cannot be negative.';
+      if (fee > 10000) return 'Late fee exceeds the maximum allowed ($10,000).';
+    }
+
+    return null;
+  }
+
   async function handleSubmit(e) {
     e.preventDefault();
+    const validationError = validate();
+    if (validationError) { setError(validationError); return; }
     setSaving(true);
     setError(null);
     const url = isEdit ? `/api/clients/${id}` : '/api/clients';

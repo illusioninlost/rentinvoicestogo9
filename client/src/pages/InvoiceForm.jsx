@@ -108,8 +108,19 @@ export default function InvoiceForm() {
     return '$' + Number(n || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   }
 
+  function validate() {
+    for (const it of items) {
+      if (parseFloat(it.unit_price) > 1000000) return 'Unit price cannot exceed $1,000,000.';
+      if (parseFloat(it.quantity) > 10000) return 'Quantity cannot exceed 10,000.';
+    }
+    if (total > 1000000) return 'Invoice total cannot exceed $1,000,000.';
+    return null;
+  }
+
   async function handleSubmit(e) {
     e.preventDefault();
+    const validationError = validate();
+    if (validationError) { setError(validationError); return; }
     setSaving(true);
     setError(null);
     const payload = { ...form, items, total };
