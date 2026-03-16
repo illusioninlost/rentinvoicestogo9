@@ -8,7 +8,7 @@ function parseItems(inv) {
 
 // GET /api/invoices
 router.get('/', async (req, res) => {
-  const result = await db.query('SELECT * FROM invoices WHERE user_id = $1 ORDER BY CASE WHEN position('-' in invoice_number) > 0 THEN CAST(SPLIT_PART(invoice_number, '-', 2) AS INTEGER) ELSE 0 END DESC', [req.userId]);
+  const result = await db.query(`SELECT * FROM invoices WHERE user_id = $1 ORDER BY CASE WHEN position('-' in invoice_number) > 0 THEN CAST(SPLIT_PART(invoice_number, '-', 2) AS INTEGER) ELSE 0 END DESC`, [req.userId]);
   res.json(result.rows.map(parseItems));
 });
 
