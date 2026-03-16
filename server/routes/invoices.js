@@ -8,7 +8,7 @@ function parseItems(inv) {
 
 // GET /api/invoices
 router.get('/', async (req, res) => {
-  const result = await db.query('SELECT * FROM invoices WHERE user_id = $1 ORDER BY CAST(REGEXP_REPLACE(invoice_number, '[^0-9]', '', 'g') AS INTEGER) DESC', [req.userId]);
+  const result = await db.query('SELECT * FROM invoices WHERE user_id = $1 ORDER BY CAST(SPLIT_PART(invoice_number, '-', 2) AS INTEGER) DESC', [req.userId]);
   res.json(result.rows.map(parseItems));
 });
 
