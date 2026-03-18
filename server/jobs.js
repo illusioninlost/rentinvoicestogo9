@@ -1,7 +1,13 @@
 const cron = require('node-cron');
 const nodemailer = require('nodemailer');
+const crypto = require('crypto');
 const db = require('./db');
 const emailConfig = require('./email.config');
+
+function unsubscribeToken(email) {
+  return crypto.createHmac('sha256', process.env.UNSUBSCRIBE_SECRET || 'rentinvoicestogo-unsub')
+    .update(email.toLowerCase()).digest('hex');
+}
 
 function getTransporter() {
   return nodemailer.createTransport({
@@ -144,6 +150,86 @@ async function runDailyJobs() {
       `, [client.user_id, invoiceNumber, client.name, client.email || '', client.address || '', todayStr, dueDateStr, items, client.monthly_rent]);
 
       console.log(`[Jobs] Created recurring invoice ${invoiceNumber} for ${client.name} (user ${client.user_id})`);
+
+      // Email the invoice to the tenant if they have an email and haven't opted out
+      if (client.email && emailConfig.user && emailConfig.pass) {
+        const optout = await db.query('SELECT 1 FROM email_optouts WHERE email = $1', [client.email.toLowerCase()]);
+        if (!optout.rows[0]) {
+          const appUrl = process.env.APP_URL || 'http://localhost:5173';
+          const unsubLink = `${appUrl}/api/unsubscribe?email=${encodeURIComponent(client.email)}&token=${unsubscribeToken(client.email)}`;
+          const parsedItems = JSON.parse(items);
+          const itemRows = parsedItems.map(it => `
+            <tr>
+              <td style="padding:10px 14px;border-bottom:1px solid #e2e5ea;font-size:13px;">${it.description || '—'}</td>
+              <td style="padding:10px 14px;border-bottom:1px solid #e2e5ea;font-size:13px;text-align:right;">${it.quantity}</td>
+              <td style="padding:10px 14px;border-bottom:1px solid #e2e5ea;font-size:13px;text-align:right;">${fmt(it.unit_price)}</td>
+              <td style="padding:10px 14px;border-bottom:1px solid #e2e5ea;font-size:13px;text-align:right;font-weight:500;">${fmt(it.amount)}</td>
+            </tr>`).join('');
+
+          const html = `
+            <div style="font-family:system-ui,sans-serif;max-width:680px;margin:0 auto;background:#f7f8fa;padding:24px;">
+              <div style="background:#fff;border:1px solid #e2e5ea;border-radius:8px;padding:40px;box-shadow:0 1px 3px rgba(0,0,0,0.08);">
+                <table style="width:100%;border-collapse:collapse;margin-bottom:32px;">
+                  <tr>
+                    <td style="vertical-align:top;">
+                      <span style="font-size:22px;font-weight:700;color:#2563eb;letter-spacing:-0.5px;">&#127968; RentInvoicesToGo</span>
+                      <div style="font-size:20px;font-weight:700;margin-top:8px;color:#1a1d23;">${invoiceNumber}</div>
+                    </td>
+                    <td style="vertical-align:top;text-align:right;">
+                      <span style="display:inline-block;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:600;letter-spacing:0.3px;text-transform:uppercase;background:#fef3c7;color:#92400e;">unpaid</span>
+                      <div style="margin-top:10px;font-size:13px;color:#6b7280;">
+                        <div>Invoice Date: <strong style="color:#1a1d23;">${todayStr}</strong></div>
+                        <div style="margin-top:2px;">Payment Due: <strong style="color:#1a1d23;">${dueDateStr}</strong></div>
+                      </div>
+                    </td>
+                  </tr>
+                </table>
+                <div style="margin-bottom:32px;">
+                  <div style="font-size:11px;font-weight:600;color:#6b7280;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;">Bill To</div>
+                  <div style="font-weight:600;font-size:14px;color:#1a1d23;">${client.name}</div>
+                  ${client.address ? `<div style="font-size:13px;color:#6b7280;margin-top:2px;">${client.address}</div>` : ''}
+                  <div style="font-size:13px;color:#6b7280;margin-top:2px;">${client.email}</div>
+                </div>
+                <table style="width:100%;border-collapse:collapse;margin-bottom:16px;">
+                  <thead>
+                    <tr style="background:#f7f8fa;">
+                      <th style="padding:10px 14px;text-align:left;font-size:12px;font-weight:600;color:#6b7280;text-transform:uppercase;letter-spacing:0.4px;border-bottom:1px solid #e2e5ea;">Description</th>
+                      <th style="padding:10px 14px;text-align:right;font-size:12px;font-weight:600;color:#6b7280;text-transform:uppercase;letter-spacing:0.4px;border-bottom:1px solid #e2e5ea;">Qty</th>
+                      <th style="padding:10px 14px;text-align:right;font-size:12px;font-weight:600;color:#6b7280;text-transform:uppercase;letter-spacing:0.4px;border-bottom:1px solid #e2e5ea;">Unit Price</th>
+                      <th style="padding:10px 14px;text-align:right;font-size:12px;font-weight:600;color:#6b7280;text-transform:uppercase;letter-spacing:0.4px;border-bottom:1px solid #e2e5ea;">Amount</th>
+                    </tr>
+                  </thead>
+                  <tbody>${itemRows}</tbody>
+                </table>
+                <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;margin-top:16px;">
+                  <div style="display:flex;gap:48px;font-size:16px;font-weight:700;border-top:2px solid #e2e5ea;padding-top:8px;">
+                    <span style="color:#1a1d23;">Total Due</span>
+                    <span style="color:#1a1d23;">${fmt(client.monthly_rent)}</span>
+                  </div>
+                </div>
+              </div>
+              <div style="margin-top:24px;padding-top:16px;border-top:1px solid #e2e5ea;text-align:center;">
+                <p style="font-size:11px;color:#9ca3af;margin:0;">
+                  This invoice was sent on behalf of your landlord via RentInvoicesToGo.<br>
+                  <a href="${unsubLink}" style="color:#9ca3af;">Unsubscribe</a> from future invoice emails.
+                </p>
+              </div>
+            </div>`;
+
+          try {
+            const transporter = getTransporter();
+            await transporter.sendMail({
+              from: emailConfig.from || emailConfig.user,
+              to: client.email,
+              subject: `Rental Invoice ${invoiceNumber} — ${fmt(client.monthly_rent)} Due ${dueDateStr}`,
+              html,
+            });
+            console.log(`[Jobs] Emailed invoice ${invoiceNumber} to ${client.email}`);
+          } catch (emailErr) {
+            console.error(`[Jobs] Failed to email invoice ${invoiceNumber}:`, emailErr.message);
+          }
+        }
+      }
     } catch (err) {
       console.error(`[Jobs] Failed to create recurring invoice for client ${client.id}:`, err.message);
     }
@@ -151,8 +237,8 @@ async function runDailyJobs() {
 }
 
 function startJobs() {
-  // Run daily at 8:00 AM server time
-  cron.schedule('0 8 * * *', runDailyJobs);
+  // Run daily at 1:00 AM EST (6:00 AM UTC)
+  cron.schedule('0 6 * * *', runDailyJobs);
   console.log('[Jobs] Daily job scheduler started');
 }
 

@@ -68,6 +68,14 @@ async function initDb() {
     ALTER TABLE clients ADD COLUMN IF NOT EXISTS late_fee REAL NOT NULL DEFAULT 0;
     ALTER TABLE invoices ADD COLUMN IF NOT EXISTS reminder_sent_at TIMESTAMPTZ;
   `);
+  await pool.query(`
+    ALTER TABLE users ENABLE ROW LEVEL SECURITY;
+    ALTER TABLE sessions ENABLE ROW LEVEL SECURITY;
+    ALTER TABLE clients ENABLE ROW LEVEL SECURITY;
+    ALTER TABLE invoices ENABLE ROW LEVEL SECURITY;
+    ALTER TABLE password_resets ENABLE ROW LEVEL SECURITY;
+    ALTER TABLE email_optouts ENABLE ROW LEVEL SECURITY;
+  `);
 }
 
 initDb().catch(console.error);
