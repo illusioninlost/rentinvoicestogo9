@@ -8,6 +8,7 @@ export default function Login() {
   const [form, setForm] = useState({ email: '', password: '' });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   function handleChange(e) {
     setForm(f => ({ ...f, [e.target.name]: e.target.value }));
@@ -58,14 +59,19 @@ export default function Login() {
           </div>
           <div className="form-group">
             <label>Password</label>
-            <input
-              type="password"
-              name="password"
-              value={form.password}
-              onChange={handleChange}
-              placeholder="Your password"
-              required
-            />
+            <div className="password-wrapper">
+              <input
+                type={showPassword ? 'text' : 'password'}
+                name="password"
+                value={form.password}
+                onChange={handleChange}
+                placeholder="Your password"
+                required
+              />
+              <button type="button" className="password-toggle" onClick={() => setShowPassword(v => !v)}>
+                {showPassword ? 'Hide' : 'Show'}
+              </button>
+            </div>
           </div>
           <div className="auth-forgot">
             <Link to="/reset-password">Forgot password?</Link>

@@ -9,6 +9,8 @@ export default function ResetPassword() {
   const [form, setForm] = useState({ token: urlToken, password: '', confirm: '' });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
 
   async function handleRequest(e) {
     e.preventDefault();
@@ -120,25 +122,35 @@ export default function ResetPassword() {
               </div>
               <div className="form-group">
                 <label>New password</label>
-                <input
-                  type="password"
-                  name="password"
-                  value={form.password}
-                  onChange={handleFormChange}
-                  placeholder="At least 8 characters"
-                  required
-                />
+                <div className="password-wrapper">
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    name="password"
+                    value={form.password}
+                    onChange={handleFormChange}
+                    placeholder="At least 8 characters"
+                    required
+                  />
+                  <button type="button" className="password-toggle" onClick={() => setShowPassword(v => !v)}>
+                    {showPassword ? 'Hide' : 'Show'}
+                  </button>
+                </div>
               </div>
               <div className="form-group">
                 <label>Confirm new password</label>
-                <input
-                  type="password"
-                  name="confirm"
-                  value={form.confirm}
-                  onChange={handleFormChange}
-                  placeholder="Repeat your new password"
-                  required
-                />
+                <div className="password-wrapper">
+                  <input
+                    type={showConfirm ? 'text' : 'password'}
+                    name="confirm"
+                    value={form.confirm}
+                    onChange={handleFormChange}
+                    placeholder="Repeat your new password"
+                    required
+                  />
+                  <button type="button" className="password-toggle" onClick={() => setShowConfirm(v => !v)}>
+                    {showConfirm ? 'Hide' : 'Show'}
+                  </button>
+                </div>
               </div>
               <button type="submit" className="btn btn-primary auth-submit" disabled={loading}>
                 {loading ? 'Resetting...' : 'Reset password'}
