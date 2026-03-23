@@ -118,7 +118,7 @@ export default function Signup() {
               checked={agreedToTerms}
               onChange={e => setAgreedToTerms(e.target.checked)}
             />
-            I agree to the <Link to="/tos" target="_blank">Terms of Service</Link> and <Link to="/privacy" target="_blank">Privacy Policy</Link>
+            <span>I agree to the <Link to="/tos" target="_blank">Terms of Service</Link> and <Link to="/privacy" target="_blank">Privacy Policy</Link></span>
           </label>
           <button type="submit" className="btn btn-primary auth-submit" disabled={loading}>
             {loading ? 'Creating account...' : 'Create account'}
