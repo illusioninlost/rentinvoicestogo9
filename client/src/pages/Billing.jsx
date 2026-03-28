@@ -91,7 +91,7 @@ export default function Billing() {
             <span style={{ fontSize: '13px', color: 'var(--text-muted)' }}>/month</span>
           </div>
           <ul style={{ listStyle: 'none', padding: 0, display: 'flex', flexDirection: 'column', gap: '10px', flex: 1, marginBottom: '1.5rem' }}>
-            {['Up to 5 invoices', 'Up to 3 tenants', 'Email invoices', 'Reports'].map(f => (
+            {['Up to 10 invoices', 'Up to 3 tenants', 'Email invoices', 'Reports'].map(f => (
               <li key={f} style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: 'var(--text-muted)' }}>
                 <span style={{ background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: '50%', width: '18px', height: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px', fontWeight: 700, color: 'var(--success)', flexShrink: 0 }}>{CHECK}</span>
                 {f}

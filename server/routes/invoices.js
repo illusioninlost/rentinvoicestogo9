@@ -17,8 +17,8 @@ router.post('/', async (req, res) => {
   const user = (await db.query('SELECT plan FROM users WHERE id = $1', [req.userId])).rows[0];
   if (user?.plan === 'free') {
     const { rows } = await db.query('SELECT COUNT(*) as count FROM invoices WHERE user_id = $1', [req.userId]);
-    if (parseInt(rows[0].count) >= 5) {
-      return res.status(403).json({ error: 'upgrade_required', limit: 'invoices', message: 'Free plan is limited to 5 invoices. Upgrade to Pro for unlimited.' });
+    if (parseInt(rows[0].count) >= 10) {
+      return res.status(403).json({ error: 'upgrade_required', limit: 'invoices', message: 'Free plan is limited to 10 invoices. Upgrade to Pro for unlimited.' });
     }
   }
 
