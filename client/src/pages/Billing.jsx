@@ -31,7 +31,7 @@ export default function Billing() {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json();
-      if (data.url) window.location.href = data.url;
+      if (data.url) window.open(data.url, '_blank');
       else setError(data.error || 'Something went wrong.');
     } catch {
       setError('Something went wrong. Please try again.');
@@ -48,7 +48,7 @@ export default function Billing() {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json();
-      if (data.url) window.location.href = data.url;
+      if (data.url) window.open(data.url, '_blank');
       else setError(data.error || 'Something went wrong.');
     } catch {
       setError('Something went wrong. Please try again.');
