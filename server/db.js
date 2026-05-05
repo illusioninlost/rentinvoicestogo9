@@ -69,6 +69,13 @@ async function initDb() {
     ALTER TABLE invoices ADD COLUMN IF NOT EXISTS reminder_sent_at TIMESTAMPTZ;
   `);
   await pool.query(`
+    ALTER TABLE users ADD COLUMN IF NOT EXISTS company_name TEXT;
+    ALTER TABLE users ADD COLUMN IF NOT EXISTS company_address TEXT;
+    ALTER TABLE users ADD COLUMN IF NOT EXISTS company_phone TEXT;
+    ALTER TABLE users ADD COLUMN IF NOT EXISTS company_email TEXT;
+    ALTER TABLE users ADD COLUMN IF NOT EXISTS company_logo TEXT;
+  `);
+  await pool.query(`
     ALTER TABLE users ENABLE ROW LEVEL SECURITY;
     ALTER TABLE sessions ENABLE ROW LEVEL SECURITY;
     ALTER TABLE clients ENABLE ROW LEVEL SECURITY;

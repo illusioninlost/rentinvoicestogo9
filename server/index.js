@@ -106,6 +106,18 @@ app.post('/api/invoices/:id/email', requireAuth, async (req, res) => {
   if (optout.rows[0]) return res.status(400).json({ error: 'This tenant has unsubscribed from invoice emails.' });
 
   const items = typeof inv.items === 'string' ? JSON.parse(inv.items) : inv.items;
+
+  const userResult = await db.query(
+    'SELECT company_name, company_address, company_phone, company_email FROM users WHERE id = $1',
+    [req.userId]
+  );
+  const company = userResult.rows[0] || {};
+  const displayName = company.company_name || 'RentInvoicesToGo';
+  const fromDetails = [company.company_address, company.company_phone, company.company_email]
+    .filter(Boolean)
+    .map(v => `<div style="margin-top:2px;">${v}</div>`)
+    .join('');
+
   const fmt = n => '$' + Number(n || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   const appUrl = process.env.APP_URL || 'http://localhost:5173';
   const unsubLink = `${appUrl}/api/unsubscribe?email=${encodeURIComponent(inv.client_email)}&token=${unsubscribeToken(inv.client_email)}`;
@@ -133,9 +145,8 @@ app.post('/api/invoices/:id/email', requireAuth, async (req, res) => {
         <table style="width:100%;border-collapse:collapse;margin-bottom:32px;">
           <tr>
             <td style="vertical-align:top;">
-              <div style="display:flex;align-items:center;gap:8px;">
-                <span style="font-size:22px;font-weight:700;color:#2563eb;letter-spacing:-0.5px;">&#127968; RentInvoicesToGo</span>
-              </div>
+              <div style="font-size:22px;font-weight:700;color:#2563eb;letter-spacing:-0.5px;">&#127968; ${displayName}</div>
+              ${fromDetails ? `<div style="font-size:12px;color:#6b7280;margin-top:6px;line-height:1.6;">${fromDetails}</div>` : ''}
               <div style="font-size:20px;font-weight:700;margin-top:8px;color:#1a1d23;">${inv.invoice_number}</div>
             </td>
             <td style="vertical-align:top;text-align:right;">
@@ -196,7 +207,7 @@ app.post('/api/invoices/:id/email', requireAuth, async (req, res) => {
         <!-- Unsubscribe footer -->
         <div style="margin-top:24px;padding-top:16px;border-top:1px solid #e2e5ea;text-align:center;">
           <p style="font-size:11px;color:#9ca3af;margin:0;">
-            This invoice was sent on behalf of your landlord via RentInvoicesToGo.<br>
+            This invoice was sent on behalf of your landlord via ${displayName}.<br>
             <a href="${unsubLink}" style="color:#9ca3af;">Unsubscribe</a> from future invoice emails.
           </p>
         </div>

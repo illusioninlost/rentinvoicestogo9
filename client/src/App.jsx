@@ -11,6 +11,7 @@ import Login from './pages/Login';
 import Signup from './pages/Signup';
 import ResetPassword from './pages/ResetPassword';
 import Billing from './pages/Billing';
+import CompanySettings from './pages/CompanySettings';
 import TermsOfService from './pages/TermsOfService';
 import PrivacyPolicy from './pages/PrivacyPolicy';
 
@@ -54,6 +55,9 @@ function Navbar() {
           </button>
           {dropdownOpen && (
             <div className="navbar-dropdown">
+              <Link to="/settings" className="navbar-dropdown-item" onClick={() => setDropdownOpen(false)}>
+                Company Settings
+              </Link>
               <Link to="/billing" className="navbar-dropdown-item" onClick={() => setDropdownOpen(false)}>
                 Manage Subscription
               </Link>
@@ -100,6 +104,7 @@ export default function App() {
                     <Route path="/tenants/:id/edit" element={<TenantForm />} />
                     <Route path="/reports" element={<Reports />} />
                     <Route path="/billing" element={<Billing />} />
+                    <Route path="/settings" element={<CompanySettings />} />
                   </Routes>
                   <footer className="app-footer">
                     <Link to="/tos">Terms of Service</Link>

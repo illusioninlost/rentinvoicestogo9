@@ -24,10 +24,15 @@ export default function InvoiceDetail() {
   const [showConfirm, setShowConfirm] = useState(false);
   const [emailStatus, setEmailStatus] = useState(null); // null | 'sending' | 'success' | 'error'
   const [emailError, setEmailError] = useState(null);
+  const [company, setCompany] = useState(null);
 
   useEffect(() => {
     apiFetch(`/api/invoices/${id}`).then(r => r.json()).then(setInv);
   }, [id]);
+
+  useEffect(() => {
+    apiFetch('/api/auth/profile').then(r => r.json()).then(setCompany);
+  }, []);
 
   async function handleEmail() {
     setEmailStatus('sending');
@@ -79,12 +84,26 @@ export default function InvoiceDetail() {
         <div className="invoice-header">
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M3 9.5L12 3l9 6.5V20a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9.5z"/>
-                <path d="M9 21V12h6v9"/>
-              </svg>
-              <span style={{ fontSize: 24, fontWeight: 700, color: 'var(--primary)', letterSpacing: -0.5 }}>RentInvoicesToGo</span>
+              {company?.company_logo
+                ? <img src={company.company_logo} alt={company.company_name || 'RentInvoicesToGo'} style={{ maxHeight: 56, maxWidth: 200, display: 'block' }} />
+                : <>
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M3 9.5L12 3l9 6.5V20a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9.5z"/>
+                      <path d="M9 21V12h6v9"/>
+                    </svg>
+                    <span style={{ fontSize: 24, fontWeight: 700, color: 'var(--primary)', letterSpacing: -0.5 }}>
+                      {company?.company_name || 'RentInvoicesToGo'}
+                    </span>
+                  </>
+              }
             </div>
+            {(company?.company_address || company?.company_phone || company?.company_email) && (
+              <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 6, lineHeight: 1.6 }}>
+                {company.company_address && <div>{company.company_address}</div>}
+                {company.company_phone && <div>{company.company_phone}</div>}
+                {company.company_email && <div>{company.company_email}</div>}
+              </div>
+            )}
             <div style={{ fontSize: 22, fontWeight: 700, marginTop: 8 }}>{inv.invoice_number}</div>
           </div>
           <div className="invoice-meta">

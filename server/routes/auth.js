@@ -4,6 +4,7 @@ const nodemailer = require('nodemailer');
 const rateLimit = require('express-rate-limit');
 const db = require('../db');
 const emailConfig = require('../email.config');
+const { requireAuth } = require('../middleware/auth');
 
 const router = express.Router();
 
@@ -174,6 +175,30 @@ router.post('/reset-password', async (req, res) => {
   await db.query('DELETE FROM sessions WHERE user_id = $1', [reset.user_id]);
 
   res.json({ ok: true, message: 'Password reset successfully. Please log in.' });
+});
+
+// GET /api/auth/profile
+router.get('/profile', requireAuth, async (req, res) => {
+  const result = await db.query(
+    'SELECT id, name, email, phone, plan, company_name, company_address, company_phone, company_email, company_logo FROM users WHERE id = $1',
+    [req.userId]
+  );
+  if (!result.rows[0]) return res.status(404).json({ error: 'User not found' });
+  res.json(result.rows[0]);
+});
+
+// PUT /api/auth/profile
+router.put('/profile', requireAuth, async (req, res) => {
+  const { company_name, company_address, company_phone, company_email, company_logo } = req.body;
+  if (company_logo && (!company_logo.startsWith('data:image/') || company_logo.length > 500000)) {
+    return res.status(400).json({ error: 'Logo must be an image under 500KB.' });
+  }
+  const result = await db.query(
+    `UPDATE users SET company_name=$1, company_address=$2, company_phone=$3, company_email=$4, company_logo=$5
+     WHERE id=$6 RETURNING id, name, email, phone, plan, company_name, company_address, company_phone, company_email, company_logo`,
+    [company_name || null, company_address || null, company_phone || null, company_email || null, company_logo || null, req.userId]
+  );
+  res.json(result.rows[0]);
 });
 
 module.exports = router;
